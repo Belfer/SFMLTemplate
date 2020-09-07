@@ -81,8 +81,8 @@ void Renderer::ClearScreen(bool color, bool depth, bool stencil)
 {
     GLbitfield mask = 0;
     mask |= color ? GL_COLOR_BUFFER_BIT : 0;
-    mask |= color ? GL_DEPTH_BUFFER_BIT : 0;
-    mask |= color ? GL_STENCIL_BUFFER_BIT : 0;
+    mask |= depth ? GL_DEPTH_BUFFER_BIT : 0;
+    mask |= stencil ? GL_STENCIL_BUFFER_BIT : 0;
     glClear(mask);
 
     ASSERT(CheckGLError());
