@@ -3,21 +3,59 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
-#define ASSERT(expr)// assert(expr)
+#include <iostream>
 
-const char* GetGLError()
+#define ASSERT(expr) assert(expr)
+
+bool CheckGLError()
 {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR)
         switch (err)
         {
-        case GL_INVALID_ENUM: return "GL_INVALID_ENUM";
-        case GL_INVALID_VALUE: return "GL_INVALID_VALUE";
-        case GL_INVALID_OPERATION: return "GL_INVALID_OPERATION";
-        case GL_INVALID_FRAMEBUFFER_OPERATION: return "GL_INVALID_FRAMEBUFFER_OPERATION";
-        case GL_OUT_OF_MEMORY: return "GL_OUT_OF_MEMORY";
+        case GL_INVALID_ENUM: std::cout << "GL_INVALID_ENUM" << std::endl; return false;
+        case GL_INVALID_VALUE: std::cout << "GL_INVALID_VALUE" << std::endl; return false;
+        case GL_INVALID_OPERATION: std::cout << "GL_INVALID_OPERATION" << std::endl; return false;
+        case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; return false;
+        case GL_OUT_OF_MEMORY: std::cout << "GL_OUT_OF_MEMORY" << std::endl; return false;
         }
-    return nullptr;
+    return true;
+}
+
+bool CheckShaderStatus(Shader shader, bool linked)
+{
+    int success;
+    char infoLog[512];
+
+    if (!linked)
+    {
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            glGetShaderInfoLog(shader, 512, NULL, infoLog);
+            std::cout << "COMPILATION_FAILED:\n" << infoLog << std::endl;
+            return false;
+        }
+    }
+    else
+    {
+        glGetProgramiv(shader, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            glGetProgramInfoLog(shader, 512, NULL, infoLog);
+            std::cout << "LINKING_FAILED:\n" << infoLog << std::endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Renderer::SetViewport(float x, float y, float width, float height)
+{
+    glViewport(x, y, width, height);
+
+    ASSERT(CheckGLError());
 }
 
 void Renderer::ClearColor(float r, float g, float b, float a)
@@ -25,73 +63,200 @@ void Renderer::ClearColor(float r, float g, float b, float a)
     glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
 void Renderer::ClearDepth(float d)
 {
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
 void Renderer::ClearStencil(float s)
 {
     glClear(GL_STENCIL_BUFFER_BIT);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
 void Renderer::ClearScreen()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-Mesh Renderer::CreateMesh(int vCount, const float* vData, int iCount, const int* iData, bool dynamic)
+void Renderer::SetCull(bool enable)
 {
-    Mesh vBuffer;
-    glGenBuffers(1, &vBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
-    glBufferData(GL_ARRAY_BUFFER, vCount * sizeof(float), vData, GL_STATIC_DRAW);
+    if (enable)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
 
-    ASSERT(GetGLError() == nullptr);
-    return vBuffer;
+    ASSERT(CheckGLError());
 }
 
-void Renderer::DeleteMesh(Mesh mesh)
+void Renderer::SetCullFace(CullFace face)
 {
-    ASSERT(GetGLError() == nullptr);
+    switch (face)
+    {
+    case CullFace::FRONT: glCullFace(GL_FRONT); break;
+    case CullFace::BACK: glCullFace(GL_BACK); break;
+    case CullFace::BOTH: glCullFace(GL_FRONT_AND_BACK); break;
+    }
+
+    ASSERT(CheckGLError());
 }
 
-void Renderer::UpdateMesh(Mesh mesh, int vCount, const float* vData, int iCount, const int* iData)
+void Renderer::SetFaceWinding(bool ccw)
 {
-    ASSERT(GetGLError() == nullptr);
+    if (ccw)
+        glFrontFace(GL_CCW);
+    else
+        glFrontFace(GL_CW);
+
+    ASSERT(CheckGLError());
 }
 
-Shader Renderer::CreateShader(const char* vSrc, const char* fSrc, const char* gSrc)
+void Renderer::SetBlend(bool enable)
 {
-    Shader vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vSrc, NULL);
-    glCompileShader(vertex_shader);
+    if (enable)
+        glEnable(GL_BLEND);
+    else
+        glDisable(GL_BLEND);
 
-    Shader fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fSrc, NULL);
-    glCompileShader(fragment_shader);
+    ASSERT(CheckGLError());
+}
+
+void Renderer::SetBlendFunc(BlendFunc func)
+{
+    switch (func)
+    {
+    case BlendFunc::ADD: glBlendFunc(GL_ONE, GL_ONE); break;
+    case BlendFunc::MULTIPLY: glBlendFunc(GL_DST_COLOR, GL_ZERO); break;
+    case BlendFunc::INTERPOLATE: glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
+    }
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::SetDepthTest(bool enable)
+{
+    if (enable)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::SetDepthWrite(bool enable)
+{
+    glDepthMask(enable);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::SetSmoothing(bool enable)
+{
+    if (enable)
+    {
+        glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_POLYGON_SMOOTH);
+    }
+    else
+    {
+        glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_POLYGON_SMOOTH);
+    }
+
+    ASSERT(CheckGLError());
+}
+
+Buffer Renderer::CreateBuffer(int bufferCount, int dataCount, const void* data, bool index, bool dynamic)
+{
+    Buffer buffer;
+    glGenBuffers(bufferCount, &buffer);
+    if (index)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, dataCount * sizeof(unsigned int), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, dataCount * sizeof(float), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    ASSERT(CheckGLError());
+    return buffer;
+}
+
+void Renderer::DeleteBuffer(int count, Buffer buffer)
+{
+    glDeleteBuffers(count, &buffer);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::UpdateBuffer(Buffer buffer, int count, const void* data, bool index)
+{
+    // TODO
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::BindBuffer(Buffer buffer, bool index)
+{
+    if (index)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+    else
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::DetachBuffer()
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    ASSERT(CheckGLError());
+}
+
+Shader Renderer::CreateShader(const char* vSrc, const char* pSrc, const char* gSrc)
+{
+    Shader vShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vShader, 1, &vSrc, NULL);
+    glCompileShader(vShader);
+    ASSERT(CheckShaderStatus(vShader, false));
+
+    Shader pShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(pShader, 1, &pSrc, NULL);
+    glCompileShader(pShader);
+    ASSERT(CheckShaderStatus(pShader, false));
 
     Shader program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
+    glAttachShader(program, vShader);
+    glAttachShader(program, pShader);
     glLinkProgram(program);
+    ASSERT(CheckShaderStatus(program, true));
 
-    ASSERT(GetGLError() == nullptr);
+    glDeleteShader(vShader);
+    glDeleteShader(pShader);
+
+    ASSERT(CheckGLError());
     return program;
 }
 
 void Renderer::DeleteShader(Shader shader)
 {
-    ASSERT(GetGLError() == nullptr);
+    glDeleteShader(shader);
+
+    ASSERT(CheckGLError());
 }
 
 void Renderer::BindShader(Shader shader, int count, const char** attributes, const int* formats)
@@ -106,92 +271,98 @@ void Renderer::BindShader(Shader shader, int count, const char** attributes, con
     int offset = 0;
     for (int i = 0; i < count; ++i)
     {
-        unsigned int loc = glGetUniformLocation(shader, attributes[i]);
+        unsigned int loc = glGetAttribLocation(shader, attributes[i]);
         glEnableVertexAttribArray(loc);
-        glVertexAttribPointer(loc, i, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * offset));
+        glVertexAttribPointer(loc, formats[i], GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * offset));
         offset += formats[i];
     }
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int i)
+void Renderer::DetachShader()
 {
-    glUseProgram(shader);
+    glUseProgram(0);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, float i)
+void Renderer::SetUniform(Shader shader, const char* name, int count, int* i)
 {
-    glUseProgram(shader);
+    glUniform1iv(glGetUniformLocation(shader, name), count, i);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, double i)
+void Renderer::SetUniform(Shader shader, const char* name, int count, float* f)
 {
-    glUseProgram(shader);
+    glUniform1fv(glGetUniformLocation(shader, name), count, f);
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, const glm::vec2& v2)
+void Renderer::SetUniform(Shader shader, const char* name, int count, glm::vec2* v2)
 {
-    glUseProgram(shader);
+    glUniform2fv(glGetUniformLocation(shader, name), count, glm::value_ptr(v2[0]));
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, const glm::vec3& v3)
+void Renderer::SetUniform(Shader shader, const char* name, int count, glm::vec3* v3)
 {
-    glUseProgram(shader);
+    glUniform3fv(glGetUniformLocation(shader, name), count, glm::value_ptr(v3[0]));
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, const glm::vec4& v4)
+void Renderer::SetUniform(Shader shader, const char* name, int count, glm::vec4* v4)
 {
-    glUseProgram(shader);
+    glUniform4fv(glGetUniformLocation(shader, name), count, glm::value_ptr(v4[0]));
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, const glm::mat2& m2)
+void Renderer::SetUniform(Shader shader, const char* name, int count, glm::mat2* m2)
 {
-    glUseProgram(shader);
+    glUniformMatrix2fv(glGetUniformLocation(shader, name), count, GL_FALSE, glm::value_ptr(m2[0]));
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, const glm::mat3& m3)
+void Renderer::SetUniform(Shader shader, const char* name, int count, glm::mat3* m3)
 {
-    glUseProgram(shader);
+    glUniformMatrix3fv(glGetUniformLocation(shader, name), count, GL_FALSE, glm::value_ptr(m3[0]));
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, const glm::mat4& m4)
+void Renderer::SetUniform(Shader shader, const char* name, int count, glm::mat4* m4)
 {
-    glUseProgram(shader);
-    glUniformMatrix4fv(glGetUniformLocation(shader, name), 1, GL_FALSE, glm::value_ptr(m4));
+    glUniformMatrix4fv(glGetUniformLocation(shader, name), count, GL_FALSE, glm::value_ptr(m4[0]));
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::DrawVertices(int primitive, int count)
+void Renderer::DrawVertices(Primitive primitive, int offset, int count)
 {
     switch (primitive)
     {
-    case 1: glDrawArrays(GL_POINTS, 0, count); break;
-    case 2: glDrawArrays(GL_LINES, 0, count); break;
-    case 3: glDrawArrays(GL_TRIANGLES, 0, count); break;
+    case Primitive::POINTS: glDrawArrays(GL_POINTS, offset, count); break;
+    case Primitive::LINES: glDrawArrays(GL_LINES, offset, count); break;
+    case Primitive::TRIANGLES: glDrawArrays(GL_TRIANGLES, offset, count); break;
     }
 
-    ASSERT(GetGLError() == nullptr);
+    ASSERT(CheckGLError());
 }
 
-void Renderer::DrawIndexed(int primitive, int count)
+void Renderer::DrawIndexed(Primitive primitive, int count)
 {
-    ASSERT(GetGLError() == nullptr);
+    switch (primitive)
+    {
+    case Primitive::POINTS: glDrawElements(GL_POINTS, count, GL_UNSIGNED_INT, 0); break;
+    case Primitive::LINES: glDrawElements(GL_LINES, count, GL_UNSIGNED_INT, 0); break;
+    case Primitive::TRIANGLES: glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0); break;
+    }
+
+    ASSERT(CheckGLError());
 }
