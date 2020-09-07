@@ -34,7 +34,6 @@ bool CheckShaderStatus(Shader shader, bool linked)
         {
             glGetShaderInfoLog(shader, 512, NULL, infoLog);
             std::cout << "COMPILATION_FAILED:\n" << infoLog << std::endl;
-            return false;
         }
     }
     else
@@ -44,11 +43,10 @@ bool CheckShaderStatus(Shader shader, bool linked)
         {
             glGetProgramInfoLog(shader, 512, NULL, infoLog);
             std::cout << "LINKING_FAILED:\n" << infoLog << std::endl;
-            return false;
         }
     }
 
-    return true;
+    return success;
 }
 
 void Renderer::SetViewport(float x, float y, float width, float height)
