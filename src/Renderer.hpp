@@ -20,12 +20,6 @@ enum struct TextureWrap { REPEAT, MIRROR, EDGE_CLAMP, BORDER_CLAMP };
 
 enum struct TextureFilter { REPEAT, NEAREST, LINEAR, NEAREST_NEAREST, NEAREST_LINEAR, LINEAR_NEAREST, LINEAR_LINEAR };
 
-struct Mesh
-{
-	Buffer vBuffer;
-	Buffer iBuffer;
-};
-
 class Renderer
 {
 public:
