@@ -12,14 +12,16 @@ enum struct CullFace { FRONT, BACK, BOTH };
 
 enum struct BlendFunc { ADD, MULTIPLY, INTERPOLATE };
 
+enum struct DepthFunc { NEVER, LESS, EQUAL, LEQUAL, GREATER, NOTEQUAL, GEQUAL, ALWAYS };
+
 class Renderer
 {
 public:
 	static void SetViewport(float x, float y, float width, float height);
-	static void ClearColor(float r, float g, float b, float a);
-	static void ClearDepth(float d);
-	static void ClearStencil(float s);
-	static void ClearScreen();
+	static void SetClearColor(float r, float g, float b, float a);
+	static void SetClearDepth(float depth);
+	static void SetClearStencil(unsigned int mask);
+	static void ClearScreen(bool color, bool depth, bool stencil);
 
 	static void SetCull(bool enable);
 	static void SetCullFace(CullFace face);
@@ -28,6 +30,7 @@ public:
 	static void SetBlendFunc(BlendFunc func);
 	static void SetDepthTest(bool enable);
 	static void SetDepthWrite(bool enable);
+	static void SetDepthFunc(DepthFunc func);
 	static void SetSmoothing(bool enable);
 	
 	static Buffer CreateBuffer(int bufferCount, int dataCount, const void* data, bool index, bool dynamic);

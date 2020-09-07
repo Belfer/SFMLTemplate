@@ -5,7 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <SFML/Window.hpp>
-#include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
@@ -87,7 +86,7 @@ bool init()
     iBuffer = Renderer::CreateBuffer(1, sizeof(indices) / sizeof(int), indices, true, false);
     shader = Renderer::CreateShader(vertexSrc, pixelSrc, nullptr);
 
-    Renderer::ClearColor(0, 0, 0, 1);
+    Renderer::SetClearColor(0, 0, 0, 1);
     Renderer::SetCull(true);
     Renderer::SetCullFace(CullFace::BACK);
     Renderer::SetFaceWinding(true);
@@ -99,7 +98,7 @@ bool init()
 void input(sf::Event e)
 {
     if (e.type == sf::Event::Resized)
-        glViewport(0, 0, e.size.width, e.size.height);
+        Renderer::SetViewport(0, 0, e.size.width, e.size.height);
 }
 
 void update(sf::Time dt)
@@ -113,7 +112,7 @@ void render()
     float ratio = width / (float)height;
 
     Renderer::SetViewport(0, 0, width, height);
-    Renderer::ClearScreen();
+    Renderer::ClearScreen(true, true, true);
 
     glm::mat4 mvp = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 0.0f, 1.0f);
 

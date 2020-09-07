@@ -58,31 +58,34 @@ void Renderer::SetViewport(float x, float y, float width, float height)
     ASSERT(CheckGLError());
 }
 
-void Renderer::ClearColor(float r, float g, float b, float a)
+void Renderer::SetClearColor(float r, float g, float b, float a)
 {
     glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::ClearDepth(float d)
+void Renderer::SetClearDepth(float depth)
 {
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClearDepth(depth);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::ClearStencil(float s)
+void Renderer::SetClearStencil(unsigned int mask)
 {
-    glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilMask(mask);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::ClearScreen()
+void Renderer::ClearScreen(bool color, bool depth, bool stencil)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    GLbitfield mask = 0;
+    mask |= color ? GL_COLOR_BUFFER_BIT : 0;
+    mask |= color ? GL_DEPTH_BUFFER_BIT : 0;
+    mask |= color ? GL_STENCIL_BUFFER_BIT : 0;
+    glClear(mask);
 
     ASSERT(CheckGLError());
 }
@@ -154,6 +157,23 @@ void Renderer::SetDepthTest(bool enable)
 void Renderer::SetDepthWrite(bool enable)
 {
     glDepthMask(enable);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::SetDepthFunc(DepthFunc func)
+{
+    switch (func)
+    {
+    case DepthFunc::NEVER: glDepthFunc(GL_NEVER); break;
+    case DepthFunc::LESS: glDepthFunc(GL_LESS); break;
+    case DepthFunc::EQUAL: glDepthFunc(GL_EQUAL); break;
+    case DepthFunc::LEQUAL: glDepthFunc(GL_LEQUAL); break;
+    case DepthFunc::GREATER: glDepthFunc(GL_GREATER); break;
+    case DepthFunc::NOTEQUAL: glDepthFunc(GL_NOTEQUAL); break;
+    case DepthFunc::GEQUAL: glDepthFunc(GL_GEQUAL); break;
+    case DepthFunc::ALWAYS: glDepthFunc(GL_ALWAYS); break;
+    }
 
     ASSERT(CheckGLError());
 }
