@@ -14,6 +14,18 @@ enum struct BlendFunc { ADD, MULTIPLY, INTERPOLATE };
 
 enum struct DepthFunc { NEVER, LESS, EQUAL, LEQUAL, GREATER, NOTEQUAL, GEQUAL, ALWAYS };
 
+enum struct TextureFormat { RBG24, RBGA32 };
+
+enum struct TextureWrap { REPEAT, MIRROR, EDGE_CLAMP, BORDER_CLAMP };
+
+enum struct TextureFilter { REPEAT, NEAREST, LINEAR, NEAREST_NEAREST, NEAREST_LINEAR, LINEAR_NEAREST, LINEAR_LINEAR };
+
+struct Mesh
+{
+	Buffer vBuffer;
+	Buffer iBuffer;
+};
+
 class Renderer
 {
 public:
@@ -54,4 +66,10 @@ public:
 
 	static void DrawVertices(Primitive primitive, int offset, int count);
 	static void DrawIndexed(Primitive primitive, int count);
+
+	static Texture CreateTexture(TextureFormat format, int count, int width, int height, const void* data, bool mipmap);
+	static void DeleteTexture(int count, Texture texture);
+	static void FilterTexture(Texture texture, TextureWrap s, TextureWrap t, TextureFilter min, TextureFilter mag);
+	static void BindTexture(Texture texture, int loc);
+	static void DetachTexture();
 };

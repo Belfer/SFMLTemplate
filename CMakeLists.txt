@@ -23,4 +23,8 @@ target_include_directories(SFMLTemplate PRIVATE "${PROJECT_SOURCE_DIR}/extern/gl
 ## Link dependencies
 target_link_libraries(SFMLTemplate sfml-graphics sfml-audio glad)
 
-add_custom_command(TARGET SFMLTemplate POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/extern/SFML-2.5.1-windows-vc15-64-bit/SFML-2.5.1/bin" $<TARGET_FILE_DIR:SFMLTemplate>)
+## Copy dependencies DLLs
+add_custom_command(TARGET SFMLTemplate POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/extern/SFML-2.5.1-windows-vc15-64-bit/SFML-2.5.1/bin" "$<TARGET_FILE_DIR:SFMLTemplate>")
+
+## Copy data folder
+add_custom_command(TARGET SFMLTemplate POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/data" "$<TARGET_FILE_DIR:SFMLTemplate>/data")

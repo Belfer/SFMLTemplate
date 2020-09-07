@@ -289,9 +289,12 @@ void Renderer::BindShader(Shader shader, int count, const char** attributes, con
     int offset = 0;
     for (int i = 0; i < count; ++i)
     {
-        unsigned int loc = glGetAttribLocation(shader, attributes[i]);
-        glEnableVertexAttribArray(loc);
-        glVertexAttribPointer(loc, formats[i], GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * offset));
+        int loc = glGetAttribLocation(shader, attributes[i]);
+        if (loc != -1)
+        {
+            glEnableVertexAttribArray(loc);
+            glVertexAttribPointer(loc, formats[i], GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * offset));
+        }
         offset += formats[i];
     }
 
@@ -381,6 +384,87 @@ void Renderer::DrawIndexed(Primitive primitive, int count)
     case Primitive::LINES: glDrawElements(GL_LINES, count, GL_UNSIGNED_INT, 0); break;
     case Primitive::TRIANGLES: glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0); break;
     }
+
+    ASSERT(CheckGLError());
+}
+
+Texture Renderer::CreateTexture(TextureFormat format, int count, int width, int height, const void* data, bool mipmap)
+{
+    Texture texture;
+    glGenTextures(count, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    switch (format)
+    {
+    case TextureFormat::RBG24: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); break;
+    case TextureFormat::RBGA32: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); break;
+    }
+    
+    if (mipmap) glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return texture;
+    ASSERT(CheckGLError());
+}
+
+void Renderer::DeleteTexture(int count, Texture texture)
+{
+    glDeleteTextures(count, &texture);
+}
+
+void Renderer::FilterTexture(Texture texture, TextureWrap s, TextureWrap t, TextureFilter min, TextureFilter mag)
+{
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    switch (s)
+    {
+    case TextureWrap::REPEAT: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); break;
+    case TextureWrap::MIRROR: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT); break;
+    case TextureWrap::EDGE_CLAMP: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); break;
+    case TextureWrap::BORDER_CLAMP: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); break;
+    }
+
+    switch (t)
+    {
+    case TextureWrap::REPEAT: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); break;
+    case TextureWrap::MIRROR: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT); break;
+    case TextureWrap::EDGE_CLAMP: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); break;
+    case TextureWrap::BORDER_CLAMP: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER); break;
+    }
+
+    switch (min)
+    {
+    case TextureFilter::NEAREST: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); break;
+    case TextureFilter::LINEAR: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); break;
+
+    case TextureFilter::NEAREST_NEAREST: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); break;
+    case TextureFilter::NEAREST_LINEAR: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR); break;
+    case TextureFilter::LINEAR_NEAREST: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); break;
+    case TextureFilter::LINEAR_LINEAR: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); break;
+    }
+
+    switch (mag)
+    {
+    case TextureFilter::NEAREST: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); break;
+    case TextureFilter::LINEAR: glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); break;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::BindTexture(Texture texture, int loc)
+{
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glActiveTexture(GL_TEXTURE0 + loc);
+
+    ASSERT(CheckGLError());
+}
+
+void Renderer::DetachTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     ASSERT(CheckGLError());
 }
