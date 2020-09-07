@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 project(SFMLTemplate)
 
 ## Setup executable
-add_executable(SFMLTemplate src/main.cpp src/Renderer.cpp src/Renderer.hpp)
+add_executable(SFMLTemplate src/main.cpp src/Renderer.cpp src/Renderer.hpp src/Utility.cpp src/Utility.hpp)
 target_include_directories(SFMLTemplate PRIVATE "${PROJECT_SOURCE_DIR}/src")
 
 ## Setup SFML
