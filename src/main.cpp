@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
+#include <cmath>
 
 #include <Renderer.hpp>
 #include <Utility.hpp>
@@ -24,10 +25,10 @@ float sunIntensisty;
 glm::vec3 camPos;
 glm::vec3 camRot;
 
-sf::Vector2i mousePos;
+sf::Vector2f mousePos;
 
-float moveSpeed = 50.0f;
-float lookSpeed = 1.5f;
+float moveSpeed = 25.0f;
+float lookSpeed = 0.5f;
 
 static const char* attributes[] = { "vPos", "vNor", "vCol", "vTex" };
 
@@ -86,8 +87,10 @@ bool init()
     //sf::Mouse::setPosition(sf::Vector2i(SCR_WIDTH / 2, SCR_HEIGHT / 2), *pWindow);
 
     // Setup pipeline
-    Renderer::SetClearColor(0.4f, 0.5f, 0.8f, 1.0f);
-    Renderer::SetCull(true);
+    Renderer::SetClearColor(0.4f, 0.5f, 0.8f, 1.0f); // Day
+    //Renderer::SetClearColor(0.05f, 0.1f, 0.25f, 1.0f); // Night
+
+    Renderer::SetCull(false);
     Renderer::SetCullFace(CullFace::BACK);
     Renderer::SetFaceWinding(true);
     Renderer::SetDepthTest(true);
@@ -97,13 +100,16 @@ bool init()
 
     // Init variables
     sunDir = glm::normalize(glm::vec3(1, 3, -10));
-    sunCol = glm::vec3(0.95f, 0.95f, 1.0f);
+
+    sunCol = glm::vec3(0.95f, 0.95f, 1.0f); // Day
     sunIntensisty = 1.15f;
+    //sunCol = glm::vec3(0.15f, 0.25f, 0.4f); // Night
+    //sunIntensisty = 0.2f;
 
     camPos = glm::vec3(0.0f, 0.0f, 1.7f);
     camRot = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    mousePos = sf::Mouse::getPosition();
+    mousePos = (sf::Vector2f)sf::Mouse::getPosition();
 
     // Load shaders
     shader = Renderer::CreateShader(vertexSrc, pixelSrc, nullptr);
@@ -124,13 +130,14 @@ void update(sf::Time deltaTime)
 {
     float dt = deltaTime.asSeconds();
 
-    sf::Vector2i mouseDelta = mousePos - sf::Mouse::getPosition();
-    mousePos = sf::Mouse::getPosition();
+    sf::Vector2f mouseTarget = (sf::Vector2f)sf::Mouse::getPosition();
+    sf::Vector2f mouseDelta = 0.5f * (mouseTarget - mousePos);
+    mousePos += mouseDelta;
 
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
     {
-        camRot.z += mouseDelta.x * lookSpeed * dt;
-        camRot.x += mouseDelta.y * lookSpeed * dt;
+        camRot.z -= mouseDelta.x * lookSpeed * dt;
+        camRot.x -= mouseDelta.y * lookSpeed * dt;
 
         constexpr float xRange = glm::pi<float>() * 0.45f;
         camRot.x = glm::clamp(camRot.x, -xRange, xRange);
@@ -156,7 +163,6 @@ void update(sf::Time deltaTime)
         move = glm::normalize(move);
 
     camPos += glm::quat(camRot) * move * moveSpeed * dt;
-    //camPos.z = 1.7f;
 
     //std::cout << "CamPos: " << glm::to_string(camPos) << std::endl;
     //std::cout << "CamRot: " << glm::to_string(camRot) << std::endl;
