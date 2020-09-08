@@ -42,6 +42,7 @@ std::vector<Model> Utility::LoadScene(const std::string& directory, const std::s
     for (size_t i = 0; i < materials.size(); i++)
     {
         Material& material = models[i].material;
+        material.diffuse = glm::vec3(materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2]);
 
         sf::Image image;
         if (image.loadFromFile((directory + "/" + materials[i].diffuse_texname).c_str()))
