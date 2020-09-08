@@ -2,6 +2,9 @@
 
 #include <glm/glm.hpp>
 
+#include <string>
+#include <vector>
+
 using Buffer = unsigned int;
 using Shader = unsigned int;
 using Texture = unsigned int;
@@ -20,9 +23,21 @@ enum struct TextureWrap { REPEAT, MIRROR, EDGE_CLAMP, BORDER_CLAMP };
 
 enum struct TextureFilter { REPEAT, NEAREST, LINEAR, NEAREST_NEAREST, NEAREST_LINEAR, LINEAR_NEAREST, LINEAR_LINEAR };
 
-class Renderer
+struct AttributeFormat
+{
+	AttributeFormat(const std::string& attribute, int format)
+		: attribute(attribute), format(format)
+	{}
+
+	std::string attribute;
+	int format = 0;
+};
+
+class Graphics
 {
 public:
+	static void Initialize();
+
 	static void SetViewport(float x, float y, float width, float height);
 	static void SetClearColor(float r, float g, float b, float a);
 	static void SetClearDepth(float depth);
@@ -47,7 +62,7 @@ public:
 
 	static Shader CreateShader(const char* vSrc, const char* pSrc, const char* gSrc);
 	static void DeleteShader(Shader shader);
-	static void BindShader(Shader shader, int count, const char** attributes, const int* formats);
+	static void BindShader(Shader shader, const std::vector<AttributeFormat>& attributeFormat);
 	static void DetachShader();
 	static void SetUniform(Shader shader, const char* name, int count, int* i);
 	static void SetUniform(Shader shader, const char* name, int count, float* f);

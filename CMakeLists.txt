@@ -2,8 +2,23 @@ cmake_minimum_required(VERSION 3.1)
 
 project(SFMLTemplate)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 ## Setup executable
-add_executable(SFMLTemplate src/main.cpp src/Renderer.cpp src/Renderer.hpp src/Utility.cpp src/Utility.hpp)
+add_executable(SFMLTemplate
+	"src/main.cpp"
+	"src/Application.cpp"
+	"src/Application.hpp"
+
+	"src/Framework/Framework.cpp"
+	"src/Framework/Framework.hpp"
+	"src/Framework/Graphics.cpp"
+	"src/Framework/Graphics.hpp"
+	"src/Framework/Utility.cpp"
+	"src/Framework/Utility.hpp"
+)
+
 target_include_directories(SFMLTemplate PRIVATE "${PROJECT_SOURCE_DIR}/src")
 
 ## Setup SFML

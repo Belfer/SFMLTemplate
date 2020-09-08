@@ -6,13 +6,20 @@
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <streambuf>
 
 #define ASSERT(expr) assert(expr)
 
-Model Utility::LoadModel(const std::string& dir, const std::string& filename)
+std::string Utility::LoadTextFile(const std::string& filepath)
 {
-    Model model;
+    std::ifstream t(filepath);
+    return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+}
 
+std::vector<Model> Utility::LoadScene(const std::string& directory, const std::string& filename)
+{
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -20,7 +27,7 @@ Model Utility::LoadModel(const std::string& dir, const std::string& filename)
     std::string warn;
     std::string err;
 
-    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (dir + "/" + filename).c_str(), dir.c_str());
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (directory + "/" + filename).c_str(), directory.c_str());
 
     if (!warn.empty())
         std::cout << warn << std::endl;
@@ -29,25 +36,28 @@ Model Utility::LoadModel(const std::string& dir, const std::string& filename)
         std::cerr << err << std::endl;
 
     if (!ret) throw;
-
-    std::vector<std::vector<VertexPNCT>> meshes;
-
+    
+    std::vector<Model> models(materials.size());
+    
     for (size_t i = 0; i < materials.size(); i++)
     {
-        tinyobj::material_t& mat = materials[i];
-        Model::Material material = Model::Material();
+        Material& material = models[i].material;
 
         sf::Image image;
-        if (image.loadFromFile((dir + "/" + mat.diffuse_texname).c_str()))
+        if (image.loadFromFile((directory + "/" + materials[i].diffuse_texname).c_str()))
         {
             sf::Vector2u imageSize = image.getSize();
-            material.texture = Renderer::CreateTexture(TextureFormat::RBGA32, 1, imageSize.x, imageSize.y, image.getPixelsPtr(), true);
-            Renderer::FilterTexture(material.texture, TextureWrap::REPEAT, TextureWrap::REPEAT, TextureFilter::LINEAR_LINEAR, TextureFilter::LINEAR);
+            material.albedo = Graphics::CreateTexture(TextureFormat::RBGA32, 1, imageSize.x, imageSize.y, image.getPixelsPtr(), true);
+            Graphics::FilterTexture(material.albedo, TextureWrap::REPEAT, TextureWrap::REPEAT, TextureFilter::LINEAR_LINEAR, TextureFilter::LINEAR);
         }
 
-        model.materials.emplace_back(material);
-        meshes.emplace_back(std::vector<VertexPNCT>());
+        material.attributeFormat.emplace_back("vPos", 3);
+        material.attributeFormat.emplace_back("vNor", 3);
+        material.attributeFormat.emplace_back("vCol", 4);
+        material.attributeFormat.emplace_back("vTex", 2);
     }
+
+    std::vector<std::vector<VertexPNCT>> meshData(materials.size());
 
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++)
@@ -58,9 +68,7 @@ Model Utility::LoadModel(const std::string& dir, const std::string& filename)
         {
             // per-face material
             int matId = shapes[s].mesh.material_ids[f];
-            tinyobj::material_t mat = materials[matId];
-
-            std::vector<VertexPNCT>& meshData = meshes[matId];
+            std::vector<VertexPNCT>& data = meshData[matId];
 
             int fv = shapes[s].mesh.num_face_vertices[f];
 
@@ -79,13 +87,12 @@ Model Utility::LoadModel(const std::string& dir, const std::string& filename)
                 vertex.normal.z = attrib.normals[(3 * idx.normal_index) + 2];
                 vertex.texcoord.x = attrib.texcoords[(2 * idx.texcoord_index) + 0];
                 vertex.texcoord.y = attrib.texcoords[(2 * idx.texcoord_index) + 1];
-                // Optional: vertex colors
-                // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-                // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-                // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-                vertex.color = glm::vec4(1, 1, 1, 1);
+                vertex.color.r = attrib.colors[3*idx.vertex_index+0];
+                vertex.color.g = attrib.colors[3*idx.vertex_index+1];
+                vertex.color.b = attrib.colors[3*idx.vertex_index+2];
+                vertex.color.a = 1.0f;
 
-                meshData.emplace_back(vertex);
+                data.emplace_back(vertex);
             }
             index_offset += fv;
         }
@@ -93,14 +100,12 @@ Model Utility::LoadModel(const std::string& dir, const std::string& filename)
 
     for (size_t i = 0; i < materials.size(); i++)
     {
-        std::vector<VertexPNCT>& meshData = meshes[i];
+        std::vector<VertexPNCT>& data = meshData[i];
 
-        Model::Mesh mesh;
-        mesh.vBuffer = Renderer::CreateBuffer(1, meshData.size() * 12, &meshData[0], false, false);
-        mesh.count = meshData.size();
-
-        model.meshes.emplace_back(mesh);
+        Mesh& mesh = models[i].mesh;
+        mesh.vBuffer = Graphics::CreateBuffer(1, data.size() * 12, &data[0], false, false);
+        mesh.count = data.size();
     }
 
-    return model;
+    return models;
 }

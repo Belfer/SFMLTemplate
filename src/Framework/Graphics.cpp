@@ -1,4 +1,4 @@
-#include "Renderer.hpp"
+#include "Graphics.hpp"
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -24,6 +24,8 @@ bool CheckGLError()
 
 bool CheckShaderStatus(Shader shader, bool linked)
 {
+    ASSERT(shader != 0);
+
     int success;
     char infoLog[512];
 
@@ -49,35 +51,40 @@ bool CheckShaderStatus(Shader shader, bool linked)
     return success;
 }
 
-void Renderer::SetViewport(float x, float y, float width, float height)
+void Graphics::Initialize()
+{
+    gladLoadGL();
+}
+
+void Graphics::SetViewport(float x, float y, float width, float height)
 {
     glViewport(x, y, width, height);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetClearColor(float r, float g, float b, float a)
+void Graphics::SetClearColor(float r, float g, float b, float a)
 {
     glClearColor(r, g, b, a);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetClearDepth(float depth)
+void Graphics::SetClearDepth(float depth)
 {
     glClearDepth(depth);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetClearStencil(unsigned int mask)
+void Graphics::SetClearStencil(unsigned int mask)
 {
     glStencilMask(mask);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::ClearScreen(bool color, bool depth, bool stencil)
+void Graphics::ClearScreen(bool color, bool depth, bool stencil)
 {
     GLbitfield mask = 0;
     mask |= color ? GL_COLOR_BUFFER_BIT : 0;
@@ -88,7 +95,7 @@ void Renderer::ClearScreen(bool color, bool depth, bool stencil)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetCull(bool enable)
+void Graphics::SetCull(bool enable)
 {
     if (enable)
         glEnable(GL_CULL_FACE);
@@ -98,7 +105,7 @@ void Renderer::SetCull(bool enable)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetCullFace(CullFace face)
+void Graphics::SetCullFace(CullFace face)
 {
     switch (face)
     {
@@ -110,7 +117,7 @@ void Renderer::SetCullFace(CullFace face)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetFaceWinding(bool ccw)
+void Graphics::SetFaceWinding(bool ccw)
 {
     if (ccw)
         glFrontFace(GL_CCW);
@@ -120,7 +127,7 @@ void Renderer::SetFaceWinding(bool ccw)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetBlend(bool enable)
+void Graphics::SetBlend(bool enable)
 {
     if (enable)
         glEnable(GL_BLEND);
@@ -130,7 +137,7 @@ void Renderer::SetBlend(bool enable)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetBlendFunc(BlendFunc func)
+void Graphics::SetBlendFunc(BlendFunc func)
 {
     switch (func)
     {
@@ -142,7 +149,7 @@ void Renderer::SetBlendFunc(BlendFunc func)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetDepthTest(bool enable)
+void Graphics::SetDepthTest(bool enable)
 {
     if (enable)
         glEnable(GL_DEPTH_TEST);
@@ -152,14 +159,14 @@ void Renderer::SetDepthTest(bool enable)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetDepthWrite(bool enable)
+void Graphics::SetDepthWrite(bool enable)
 {
     glDepthMask(enable);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetDepthFunc(DepthFunc func)
+void Graphics::SetDepthFunc(DepthFunc func)
 {
     switch (func)
     {
@@ -176,7 +183,7 @@ void Renderer::SetDepthFunc(DepthFunc func)
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetSmoothing(bool enable)
+void Graphics::SetSmoothing(bool enable)
 {
     if (enable)
     {
@@ -192,7 +199,7 @@ void Renderer::SetSmoothing(bool enable)
     ASSERT(CheckGLError());
 }
 
-Buffer Renderer::CreateBuffer(int bufferCount, int dataCount, const void* data, bool index, bool dynamic)
+Buffer Graphics::CreateBuffer(int bufferCount, int dataCount, const void* data, bool index, bool dynamic)
 {
     Buffer buffer;
     glGenBuffers(bufferCount, &buffer);
@@ -213,22 +220,27 @@ Buffer Renderer::CreateBuffer(int bufferCount, int dataCount, const void* data, 
     return buffer;
 }
 
-void Renderer::DeleteBuffer(int count, Buffer buffer)
+void Graphics::DeleteBuffer(int count, Buffer buffer)
 {
+    ASSERT(buffer != 0);
     glDeleteBuffers(count, &buffer);
+    buffer = 0;
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::UpdateBuffer(Buffer buffer, int count, const void* data, bool index)
+void Graphics::UpdateBuffer(Buffer buffer, int count, const void* data, bool index)
 {
+    ASSERT(buffer != 0);
     // TODO
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::BindBuffer(Buffer buffer, bool index)
+void Graphics::BindBuffer(Buffer buffer, bool index)
 {
+    ASSERT(buffer != 0);
+
     if (index)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
     else
@@ -237,7 +249,7 @@ void Renderer::BindBuffer(Buffer buffer, bool index)
     ASSERT(CheckGLError());
 }
 
-void Renderer::DetachBuffer()
+void Graphics::DetachBuffer()
 {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -245,8 +257,11 @@ void Renderer::DetachBuffer()
     ASSERT(CheckGLError());
 }
 
-Shader Renderer::CreateShader(const char* vSrc, const char* pSrc, const char* gSrc)
+Shader Graphics::CreateShader(const char* vSrc, const char* pSrc, const char* gSrc)
 {
+    ASSERT(vSrc != nullptr);
+    ASSERT(pSrc != nullptr);
+
     Shader vShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vShader, 1, &vSrc, NULL);
     glCompileShader(vShader);
@@ -270,101 +285,111 @@ Shader Renderer::CreateShader(const char* vSrc, const char* pSrc, const char* gS
     return program;
 }
 
-void Renderer::DeleteShader(Shader shader)
+void Graphics::DeleteShader(Shader shader)
 {
+    ASSERT(shader != 0);
     glDeleteShader(shader);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::BindShader(Shader shader, int count, const char** attributes, const int* formats)
+void Graphics::BindShader(Shader shader, const std::vector<AttributeFormat>& attributeFormat)
 {
+    ASSERT(shader != 0);
     glUseProgram(shader);
 
     int stride = 0;
-    for (int i = 0; i < count; ++i)
-        stride += formats[i];
+    for (int i = 0; i < attributeFormat.size(); ++i)
+        stride += attributeFormat[i].format;
     stride *= sizeof(float);
 
     int offset = 0;
-    for (int i = 0; i < count; ++i)
+    for (int i = 0; i < attributeFormat.size(); ++i)
     {
-        int loc = glGetAttribLocation(shader, attributes[i]);
+        int loc = glGetAttribLocation(shader, attributeFormat[i].attribute.c_str());
         if (loc != -1)
         {
             glEnableVertexAttribArray(loc);
-            glVertexAttribPointer(loc, formats[i], GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * offset));
+            glVertexAttribPointer(loc, attributeFormat[i].format, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * offset));
         }
-        offset += formats[i];
+        offset += attributeFormat[i].format;
     }
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::DetachShader()
+void Graphics::DetachShader()
 {
     glUseProgram(0);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, int* i)
+void Graphics::SetUniform(Shader shader, const char* name, int count, int* i)
 {
+    ASSERT(shader != 0);
     glUniform1iv(glGetUniformLocation(shader, name), count, i);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, float* f)
+void Graphics::SetUniform(Shader shader, const char* name, int count, float* f)
 {
+    ASSERT(shader != 0);
     glUniform1fv(glGetUniformLocation(shader, name), count, f);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, glm::vec2* v2)
+void Graphics::SetUniform(Shader shader, const char* name, int count, glm::vec2* v2)
 {
+    ASSERT(shader != 0);
     glUniform2fv(glGetUniformLocation(shader, name), count, glm::value_ptr(v2[0]));
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, glm::vec3* v3)
+void Graphics::SetUniform(Shader shader, const char* name, int count, glm::vec3* v3)
 {
+    ASSERT(shader != 0);
     glUniform3fv(glGetUniformLocation(shader, name), count, glm::value_ptr(v3[0]));
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, glm::vec4* v4)
+void Graphics::SetUniform(Shader shader, const char* name, int count, glm::vec4* v4)
 {
+    ASSERT(shader != 0);
     glUniform4fv(glGetUniformLocation(shader, name), count, glm::value_ptr(v4[0]));
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, glm::mat2* m2)
+void Graphics::SetUniform(Shader shader, const char* name, int count, glm::mat2* m2)
 {
+    ASSERT(shader != 0);
     glUniformMatrix2fv(glGetUniformLocation(shader, name), count, GL_FALSE, glm::value_ptr(m2[0]));
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, glm::mat3* m3)
+void Graphics::SetUniform(Shader shader, const char* name, int count, glm::mat3* m3)
 {
+    ASSERT(shader != 0);
     glUniformMatrix3fv(glGetUniformLocation(shader, name), count, GL_FALSE, glm::value_ptr(m3[0]));
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::SetUniform(Shader shader, const char* name, int count, glm::mat4* m4)
+void Graphics::SetUniform(Shader shader, const char* name, int count, glm::mat4* m4)
 {
+    ASSERT(shader != 0);
     glUniformMatrix4fv(glGetUniformLocation(shader, name), count, GL_FALSE, glm::value_ptr(m4[0]));
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::DrawVertices(Primitive primitive, int offset, int count)
+void Graphics::DrawVertices(Primitive primitive, int offset, int count)
 {
     switch (primitive)
     {
@@ -376,7 +401,7 @@ void Renderer::DrawVertices(Primitive primitive, int offset, int count)
     ASSERT(CheckGLError());
 }
 
-void Renderer::DrawIndexed(Primitive primitive, int count)
+void Graphics::DrawIndexed(Primitive primitive, int count)
 {
     switch (primitive)
     {
@@ -388,7 +413,7 @@ void Renderer::DrawIndexed(Primitive primitive, int count)
     ASSERT(CheckGLError());
 }
 
-Texture Renderer::CreateTexture(TextureFormat format, int count, int width, int height, const void* data, bool mipmap)
+Texture Graphics::CreateTexture(TextureFormat format, int count, int width, int height, const void* data, bool mipmap)
 {
     Texture texture;
     glGenTextures(count, &texture);
@@ -407,13 +432,18 @@ Texture Renderer::CreateTexture(TextureFormat format, int count, int width, int 
     ASSERT(CheckGLError());
 }
 
-void Renderer::DeleteTexture(int count, Texture texture)
+void Graphics::DeleteTexture(int count, Texture texture)
 {
+    ASSERT(texture != 0);
     glDeleteTextures(count, &texture);
+    texture = 0;
+
+    ASSERT(CheckGLError());
 }
 
-void Renderer::FilterTexture(Texture texture, TextureWrap s, TextureWrap t, TextureFilter min, TextureFilter mag)
+void Graphics::FilterTexture(Texture texture, TextureWrap s, TextureWrap t, TextureFilter min, TextureFilter mag)
 {
+    ASSERT(texture != 0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     switch (s)
@@ -454,15 +484,16 @@ void Renderer::FilterTexture(Texture texture, TextureWrap s, TextureWrap t, Text
     ASSERT(CheckGLError());
 }
 
-void Renderer::BindTexture(Texture texture, int loc)
+void Graphics::BindTexture(Texture texture, int loc)
 {
+    ASSERT(texture != 0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glActiveTexture(GL_TEXTURE0 + loc);
 
     ASSERT(CheckGLError());
 }
 
-void Renderer::DetachTexture()
+void Graphics::DetachTexture()
 {
     glBindTexture(GL_TEXTURE_2D, 0);
 
