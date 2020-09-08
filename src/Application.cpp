@@ -59,15 +59,26 @@ bool Application::Initialize(sf::RenderWindow& window)
     shader = Graphics::CreateShader(vSource.c_str(), pSource.c_str(), nullptr);
 
     // Load scene
-    scene.models = Utility::LoadScene("data/Sponza", "sponza.obj");
-
-    for (size_t i = 0; i < scene.models.size(); ++i)
+    std::vector<Model> sponza = Utility::LoadScene("data/Sponza", "sponza.obj");
+    for (size_t i = 0; i < sponza.size(); ++i)
     {
-        scene.models[i].transform.rotation.x = glm::pi<float>() * 0.5f;
-        scene.models[i].transform.scale = glm::vec3(0.1f, 0.1f, 0.1f);
+        sponza[i].transform.rotation.x = glm::pi<float>() * 0.5f;
+        sponza[i].transform.scale = glm::vec3(0.1f);
 
-        scene.models[i].material.shader = shader;
+        sponza[i].material.shader = shader;
     }
+
+    std::vector<Model> statue = Utility::LoadScene("data/Statue", "statue.obj");
+    for (size_t i = 0; i < statue.size(); ++i)
+    {
+        statue[i].transform.rotation.z = glm::pi<float>() * 0.5f;
+        statue[i].transform.scale = glm::vec3(0.02f);
+
+        statue[i].material.shader = shader;
+    }
+
+    scene.models.insert(scene.models.end(), sponza.begin(), sponza.end());
+    scene.models.insert(scene.models.end(), statue.begin(), statue.end());
 
     return true;
 }
