@@ -27,6 +27,8 @@ struct DirectionalLight
 
 struct VertexPNCT
 {
+	static const std::vector<AttributeFormat> format;
+
 	glm::vec3 position = glm::vec3(0);
 	glm::vec3 normal = glm::vec3(0);
 	glm::vec4 color = glm::vec4(1);

@@ -13,5 +13,7 @@ class Utility
 public:
     static std::string LoadTextFile(const std::string& filepath);
 
+    static Model LoadModel(const std::string& directory, const std::string& filename);
+
     static std::vector<Model> LoadScene(const std::string& directory, const std::string& filename);
 };

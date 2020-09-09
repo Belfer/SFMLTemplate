@@ -17,6 +17,9 @@ private:
 	float moveSpeed = 25.0f;
 	float lookSpeed = 0.5f;
 
-	Shader shader;
+	Shader blitShader;
+	Shader litShader;
+	
+	Model screen;
 	Scene scene;
 };

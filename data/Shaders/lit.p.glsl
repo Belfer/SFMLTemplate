@@ -26,8 +26,8 @@ void main()
 
     vec3 color = ambient + diffuse;
     
-    if (albedo.a < 0.5)
-        discard;
+    int cutout = int(albedo.a >= 0.5);
+    gl_FragDepth = (cutout * gl_FragCoord.z) + (1 - cutout);
 
-    FragColor = vec4(color, albedo.a);
+    FragColor = vec4(color, 1.0);
 };

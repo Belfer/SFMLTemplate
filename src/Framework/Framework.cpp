@@ -6,20 +6,22 @@
 
 #include <iostream>
 
+const std::vector<AttributeFormat> VertexPNCT::format({ { "vPos", 3 }, { "vNor", 3 }, { "vCol", 4 }, { "vTex", 2 } });
+
 void Scene::Render()
 {
     Graphics::ClearScreen(true, true, true);
 
     glm::mat4 v = glm::lookAt(camera.position, camera.position + glm::quat(camera.rotation) * glm::vec3(0, 1, 0), glm::vec3(0, 0, 1));
     
-    int samplerLoc = 0;
+    int textureLoc = 0;
     glm::vec2 tiling = glm::vec2(1, -1);
 
     for (size_t i = 0; i < models.size(); i++)
     {
         Model& model = models[i];
 
-        glm::mat4 m = glm::translate(glm::mat4(1), model.transform.position) * glm::mat4(glm::quat(model.transform.rotation)) * glm::scale(glm::mat4(1), model.transform.scale);
+        glm::mat4 m = glm::translate(glm::mat4(1), model.transform.position) * glm::mat4(glm::quat(glm::radians(model.transform.rotation))) * glm::scale(glm::mat4(1), model.transform.scale);
         glm::mat4 mvp = camera.projection * v * m;
 
         Graphics::BindBuffer(model.mesh.vBuffer, false);
@@ -29,7 +31,7 @@ void Scene::Render()
         Graphics::BindShader(model.material.shader, model.material.attributeFormat);
 
         if (model.material.albedo != 0)
-            Graphics::BindTexture(model.material.albedo, 0);
+            Graphics::BindTexture(model.material.albedo, textureLoc);
 
         Graphics::SetUniform(model.material.shader, "Model", 1, &m);
         Graphics::SetUniform(model.material.shader, "MVP", 1, &mvp);
@@ -37,7 +39,7 @@ void Scene::Render()
         Graphics::SetUniform(model.material.shader, "SunColor", 1, &sun.color);
         Graphics::SetUniform(model.material.shader, "SunIntensity", 1, &sun.intensisty);
 
-        Graphics::SetUniform(model.material.shader, "Texture", 1, &samplerLoc);
+        Graphics::SetUniform(model.material.shader, "Texture", 1, &textureLoc);
         Graphics::SetUniform(model.material.shader, "Tiling", 1, &tiling);
         
         if (model.mesh.iBuffer != 0)

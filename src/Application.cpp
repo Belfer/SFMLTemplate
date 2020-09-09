@@ -37,7 +37,7 @@ bool Application::Initialize(sf::RenderWindow& window)
     Graphics::SetFaceWinding(true);
     Graphics::SetDepthTest(true);
     Graphics::SetDepthWrite(true);
-    Graphics::SetBlend(true);
+    Graphics::SetBlend(false);
     Graphics::SetBlendFunc(BlendFunc::INTERPOLATE);
 
     // Init variables
@@ -54,27 +54,31 @@ bool Application::Initialize(sf::RenderWindow& window)
     mousePos = (sf::Vector2f)sf::Mouse::getPosition();
 
     // Load shaders
-    std::string vSource = Utility::LoadTextFile("data/Shaders/lit.v.glsl");
-    std::string pSource = Utility::LoadTextFile("data/Shaders/lit.p.glsl");
-    shader = Graphics::CreateShader(vSource.c_str(), pSource.c_str(), nullptr);
+    blitShader = Graphics::CreateShader(Utility::LoadTextFile("data/Shaders/blit.v.glsl").c_str(), Utility::LoadTextFile("data/Shaders/blit.p.glsl").c_str(), nullptr);
+    litShader = Graphics::CreateShader(Utility::LoadTextFile("data/Shaders/lit.v.glsl").c_str(), Utility::LoadTextFile("data/Shaders/lit.p.glsl").c_str(), nullptr);
+
+    // Load screen model
+    //screen = Utility::LoadModel("data/Shaders/screen.obj");
+    //screen.material.shader = blitShader;
+    //screen.material.attributeFormat.emplace_back("vPos", 2);
 
     // Load scene
     std::vector<Model> sponza = Utility::LoadScene("data/Sponza", "sponza.obj");
     for (size_t i = 0; i < sponza.size(); ++i)
     {
-        sponza[i].transform.rotation.x = glm::pi<float>() * 0.5f;
+        sponza[i].transform.rotation.x = 90.0f;
         sponza[i].transform.scale = glm::vec3(0.1f);
 
-        sponza[i].material.shader = shader;
+        sponza[i].material.shader = litShader;
     }
 
     std::vector<Model> statue = Utility::LoadScene("data/Statue", "statue.obj");
     for (size_t i = 0; i < statue.size(); ++i)
     {
-        statue[i].transform.rotation.z = glm::pi<float>() * 0.5f;
+        statue[i].transform.rotation.z = 90.0f;
         statue[i].transform.scale = glm::vec3(0.02f);
 
-        statue[i].material.shader = shader;
+        statue[i].material.shader = litShader;
     }
 
     scene.models.insert(scene.models.end(), sponza.begin(), sponza.end());
@@ -141,9 +145,21 @@ void Application::Update(const sf::Time& deltaTime)
 void Application::Render()
 {
     scene.Render();
+
+    // Render to screen quad
+    //Graphics::BindBuffer(screen.mesh.vBuffer, false);
+    //Graphics::BindShader(screen.material.shader, screen.material.attributeFormat);
+    //int textureLoc = 0;
+    //Graphics::BindTexture(0, textureLoc);
+    //Graphics::SetUniform(0, "Texture", 1, &textureLoc);
+    //Graphics::DrawVertices(Primitive::TRIANGLES, 0, screen.mesh.count);
+    //Graphics::DetachTexture();
+    //Graphics::DetachShader();
+    //Graphics::DetachBuffer();
 }
 
 void Application::Clean()
 {
-    Graphics::DeleteShader(shader);
+    Graphics::DeleteShader(blitShader);
+    Graphics::DeleteShader(litShader);
 }
